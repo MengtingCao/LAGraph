@@ -26,6 +26,8 @@
 //      web:        84907041475
 //      road:       438804
 
+
+#include "LAGraphX.h"
 #include "LAGraph_demo_GPU.h"
 
 #define NTHREAD_LIST 1
@@ -166,13 +168,16 @@ int main (int argc, char **argv)
 
     // warmup method WITH GPU:
     // LAGr_TriangleCount_Sandia_ULT: sum (sum ((U * L') .* U))
+    ttot = LAGraph_WallClockTime ( ) ;
+
     GrB_Index ntriangles_gpu ;
     GxB_set (GxB_GPU_CONTROL, GxB_GPU_ALWAYS) ;
-    LAGr_TriangleCount_Method method = LAGr_TriangleCount_Sandia_ULT ;
+    //LAGr_TriangleCount_Method method = LAGr_TriangleCount_Sandia_ULT ;
     LAGRAPH_TRY (LAGr_TriangleCount_GPU (&ntriangles_gpu, G, &method, &presort, msg)) ;
+    ttot = LAGraph_WallClockTime ( ) - ttot ;
+
     printf ("# of triangles: %" PRIu64 " (GPU)\n", ntriangles_gpu) ;
     print_method (stdout, 6, presort) ;
-    ttot = LAGraph_WallClockTime ( ) - ttot ;
     printf ("nthreads: %3d time: %12.6f rate: %6.2f (Sandia_ULT, one trial)\n",
             nthreads_max, ttot, 1e-6 * nvals / ttot) ;
 

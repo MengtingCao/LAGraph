@@ -876,12 +876,12 @@ int LAGraph_HelloWorld // a simple algorithm, just for illustration
 int LAGr_TriangleCount_GPU
 (
     // output:
-    uint64_t       *ntriangles,
+    uint64_t                   *ntriangles,
     // input:
-    const LAGraph_Graph G,
-    LAGraph_TriangleCount_Method    method,
-    LAGraph_TriangleCount_Presort *presort,
-    char           *msg
+    const LAGraph_Graph         G,
+    LAGr_TriangleCount_Method  *method,
+    LAGr_TriangleCount_Presort *presort,
+    char                       *msg
 ) ;
 
 #endif
