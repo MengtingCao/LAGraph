@@ -354,22 +354,54 @@ int LAGr_TriangleCount_GPU
 
             // using the masked dot product
             LG_TRY (tricount_prep (&L, &U, A, msg)) ;
+
             t = LAGraph_WallClockTime ( ) ;
             GRB_TRY (GrB_mxm (C, L, NULL, semiring, L, U, GrB_DESC_ST1)) ;
             GRB_TRY (GrB_reduce (&ntri, NULL, monoid, C, NULL)) ;
             t = LAGraph_WallClockTime ( ) - t ;
             printf ("Sandia_LUT (dot) time: %g\n", t) ;
+
+            GRB_TRY (GrB_Matrix_clear (C)) ;
+            t = LAGraph_WallClockTime ( ) ;
+            GRB_TRY (GrB_mxm (C, L, NULL, semiring, L, U, GrB_DESC_ST1)) ;
+            GRB_TRY (GrB_reduce (&ntri, NULL, monoid, C, NULL)) ;
+            t = LAGraph_WallClockTime ( ) - t ;
+            printf ("Sandia_LUT (dot) time: %g SECOND TIME\n", t) ;
+
+            GRB_TRY (GrB_Matrix_clear (C)) ;
+            t = LAGraph_WallClockTime ( ) ;
+            GRB_TRY (GrB_mxm (C, L, NULL, semiring, L, U, GrB_DESC_ST1)) ;
+            GRB_TRY (GrB_reduce (&ntri, NULL, monoid, C, NULL)) ;
+            t = LAGraph_WallClockTime ( ) - t ;
+            printf ("Sandia_LUT (dot) time: %g THIRD  TIME\n", t) ;
+
             break ;
 
         case LAGr_TriangleCount_Sandia_ULT: // 6: sum (sum ((U * L') .* U))
 
             // using the masked dot product
             LG_TRY (tricount_prep (&L, &U, A, msg)) ;
+
             t = LAGraph_WallClockTime ( ) ;
             GRB_TRY (GrB_mxm (C, U, NULL, semiring, U, L, GrB_DESC_ST1)) ;
-            t = LAGraph_WallClockTime ( ) - t ;
             GRB_TRY (GrB_reduce (&ntri, NULL, monoid, C, NULL)) ;
+            t = LAGraph_WallClockTime ( ) - t ;
             printf ("Sandia_ULT (dot) time: %g\n", t) ;
+
+            GRB_TRY (GrB_Matrix_clear (C)) ;
+            t = LAGraph_WallClockTime ( ) ;
+            GRB_TRY (GrB_mxm (C, U, NULL, semiring, U, L, GrB_DESC_ST1)) ;
+            GRB_TRY (GrB_reduce (&ntri, NULL, monoid, C, NULL)) ;
+            t = LAGraph_WallClockTime ( ) - t ;
+            printf ("Sandia_ULT (dot) time: %g SECOND TIME\n", t) ;
+
+            GRB_TRY (GrB_Matrix_clear (C)) ;
+            t = LAGraph_WallClockTime ( ) ;
+            GRB_TRY (GrB_mxm (C, U, NULL, semiring, U, L, GrB_DESC_ST1)) ;
+            GRB_TRY (GrB_reduce (&ntri, NULL, monoid, C, NULL)) ;
+            t = LAGraph_WallClockTime ( ) - t ;
+            printf ("Sandia_ULT (dot) time: %g THIRD  TIME\n", t) ;
+
             break ;
     }
 
