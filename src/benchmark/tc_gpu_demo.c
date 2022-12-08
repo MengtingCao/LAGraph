@@ -57,7 +57,8 @@ char *method_name (int method, int sorting)
         case LAGr_TriangleCount_Sandia_UU:  s = "Sandia_UU: sum ((U*U) .* U)    " ; break ;
         case LAGr_TriangleCount_Sandia_LUT: s = "Sandia_LUT: sum ((L*U') .* L)  " ; break ;
         case LAGr_TriangleCount_Sandia_ULT: s = "Sandia_ULT: sum ((U*L') .* U)  " ; break ;
-        default: abort ( ) ;
+	default:    printf("Unrecognized method: %d\n", method);
+		    abort ( ) ;
     }
 
     if (sorting == LAGr_TriangleCount_Descending) sprintf (t, "%s sort: descending degree", s) ;
@@ -183,7 +184,7 @@ int main (int argc, char **argv)
     printf ("nthreads: %3d time: %12.6f rate: %6.2f (Sandia_ULT, one trial)\n",
             nthreads_max, ttot, 1e-6 * nvals / ttot) ;
 
-    if (ntriangles_gpu != ntsimple)
+    if (ntriangles_gpu != ntriangles)
     {
         printf ("wrong # triangles: %g %g\n", (double) ntriangles,
             (double) ntsimple) ;
@@ -225,6 +226,8 @@ int main (int argc, char **argv)
         int sorting = LAGr_TriangleCount_NoSort ; // HACK
         {
             printf ("\nMethod: ") ; print_method (stdout, method, sorting) ;
+
+	    /**
             if (n == 134217726 && method < 5)
             {
                 printf ("kron fails on method %d; skipped\n", method) ;
@@ -236,6 +239,7 @@ int main (int argc, char **argv)
                         method) ;
                 continue ;
             }
+	    **/
 
             for (int t = 1 ; t <= nt ; t++)
             {
@@ -284,10 +288,10 @@ int main (int argc, char **argv)
         }
     }
 
-    printf ("\nBest method: ") ;
-    print_method (stdout, method_best, sorting_best) ;
-    printf ("nthreads: %3d time: %12.6f rate: %6.2f\n",
-        nthreads_best, t_best, 1e-6 * nvals / t_best) ;
+    //printf ("\nBest method: ") ;
+    //print_method (stdout, method_best, sorting_best) ;
+    //printf ("nthreads: %3d time: %12.6f rate: %6.2f\n",
+    //    nthreads_best, t_best, 1e-6 * nvals / t_best) ;
     LG_FREE_ALL ;
     LAGRAPH_TRY (LAGraph_Finalize (msg)) ;
     return (GrB_SUCCESS) ;
