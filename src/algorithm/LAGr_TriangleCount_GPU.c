@@ -114,7 +114,7 @@ static int tricount_prep
     LAGraph_Free ((void **) &P, NULL) ;     \
 }
 
-int LAGr_TriangleCount
+int LAGr_TriangleCount_GPU
 (
     // output:
     uint64_t *ntriangles,
