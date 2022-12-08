@@ -209,6 +209,7 @@ int main (int argc, char **argv)
     int method_best = -1 ;
     int nthreads_best = -1 ;
     int sorting_best = 0 ;
+    int gpu_best = -1 ;
 
     // kron: input graph: nodes: 134217726 edges: 4223264644
     // fails on methods 3 and 4.
@@ -218,14 +219,20 @@ int main (int argc, char **argv)
 
     // try all methods 3 to 5
 //  for (int method = 3 ; method <= 5 ; method++)
-    for (int method = 1 ; method <= 1 ; method++)   // HACK
+    for (int method = 0 ; method <= 6 ; method++)   // HACK
     {
         // for (int sorting = -1 ; sorting <= 2 ; sorting++)
 
 //      int sorting = LAGr_TriangleCount_AutoSort ; // just use auto-sort
         int sorting = LAGr_TriangleCount_NoSort ; // HACK
+
+        for (int with_gpu = 0 ; with_gpu <= 1 ; with_gpu++)
         {
-            printf ("\nMethod: ") ; print_method (stdout, method, sorting) ;
+
+            GxB_set (GxB_GPU_CONTROL, with_gpu ? GxB_GPU_ALWAYS : GxB_GPU_NEVER) ;
+
+            printf ("\nMethod: GPU: %d", with_gpu) ;
+            print_method (stdout, method, sorting) ;
 
 	    /**
             if (n == 134217726 && method < 5)
@@ -283,15 +290,16 @@ int main (int argc, char **argv)
                     method_best = method ;
                     nthreads_best = nthreads ;
                     sorting_best = sorting ;
+                    gpu_best = with_gpu ;
                 }
             }
         }
     }
 
-    //printf ("\nBest method: ") ;
-    //print_method (stdout, method_best, sorting_best) ;
-    //printf ("nthreads: %3d time: %12.6f rate: %6.2f\n",
-    //    nthreads_best, t_best, 1e-6 * nvals / t_best) ;
+    printf ("\nBest method: GPU: %d", gpu_best) ;
+    print_method (stdout, method_best, sorting_best) ;
+    printf ("nthreads: %3d time: %12.6f rate: %6.2f\n",
+        nthreads_best, t_best, 1e-6 * nvals / t_best) ;
     LG_FREE_ALL ;
     LAGRAPH_TRY (LAGraph_Finalize (msg)) ;
     return (GrB_SUCCESS) ;
