@@ -299,6 +299,7 @@ int LAGr_TriangleCount_GPU
 
     int64_t ntri ;
     double t ;
+    printf ("\n") ;
 
     switch (method)
     {
