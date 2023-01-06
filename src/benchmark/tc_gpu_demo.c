@@ -29,6 +29,8 @@
 
 #include "LAGraphX.h"
 #include "LAGraph_demo_GPU.h"
+// #include "GB_Global.h"
+void GB_Global_hack_set (int k, int64_t hack) ;
 
 #define NTHREAD_LIST 1
 // #define NTHREAD_LIST 2
@@ -158,7 +160,7 @@ int main (int argc, char **argv)
 
     // warmup method:
     // LAGr_TriangleCount_Sandia_ULT: sum (sum ((U * L') .* U))
-    GxB_set (GxB_GPU_CONTROL, GxB_GPU_NEVER) ;
+    GB_Global_hack_set (2, 2) ; // never use the GPU
     LAGr_TriangleCount_Method method = LAGr_TriangleCount_Sandia_ULT ;
     LAGRAPH_TRY (LAGr_TriangleCount_GPU (&ntriangles, G, &method, &presort, msg)) ;
     printf ("# of triangles: %" PRIu64 "\n", ntriangles) ;
@@ -172,7 +174,8 @@ int main (int argc, char **argv)
     ttot = LAGraph_WallClockTime ( ) ;
 
     GrB_Index ntriangles_gpu ;
-    GxB_set (GxB_GPU_CONTROL, GxB_GPU_ALWAYS) ;
+    GB_Global_hack_set (2, 1) ; // always use the GPU
+
     GxB_set (GxB_BURBLE, true) ;
     //LAGr_TriangleCount_Method method = LAGr_TriangleCount_Sandia_ULT ;
     LAGRAPH_TRY (LAGr_TriangleCount_GPU (&ntriangles_gpu, G, &method, &presort, msg)) ;
@@ -193,7 +196,7 @@ int main (int argc, char **argv)
         abort ( ) ;
     }
 
-    GxB_set (GxB_GPU_CONTROL, GxB_GPU_NEVER) ;
+    GB_Global_hack_set (2, 2) ; // never use the GPU
     presort = LAGr_TriangleCount_AutoSort ; // = 0 (auto selection)
 
 #if 0
@@ -229,7 +232,14 @@ int main (int argc, char **argv)
         for (int with_gpu = 0 ; with_gpu <= 1 ; with_gpu++)
         {
 
-            GxB_set (GxB_GPU_CONTROL, with_gpu ? GxB_GPU_ALWAYS : GxB_GPU_NEVER) ;
+            if (with_gpu)
+            {
+                GB_Global_hack_set (2, 1) ; // always use the GPU
+            }
+            else
+            {
+                GB_Global_hack_set (2, 2) ; // never use the GPU
+            }
 
             printf ("\nMethod: GPU: %d", with_gpu) ;
             print_method (stdout, method, sorting) ;

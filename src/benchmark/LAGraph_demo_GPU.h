@@ -1117,7 +1117,7 @@ static inline int demo_init (bool burble)
 #else
     // use the GPU
     LAGRAPH_TRY (LAGr_Init (GxB_NONBLOCKING_GPU, NULL, NULL, NULL, NULL, NULL));
-    GxB_set (GxB_GPU_CONTROL, GxB_GPU_ALWAYS) ;
+    // GxB_set (GxB_GPU_ID, 0) ;   // use GPU 0
 #endif
 
     #if LAGRAPH_SUITESPARSE
