@@ -45,12 +45,12 @@ int LAGraph_Happly //happly Checked for pointer issues
 )
 {
     float reduced = 0.0;
-    // y = u + x
-    GRB_TRY (GrB_eWiseAdd (y,NULL, NULL, GrB_PLUS_FP32, u, x, NULL));
+    // y = u .* x
+    GRB_TRY (GrB_eWiseAdd (y,NULL, NULL, GrB_TIMES_FP32, u, x, NULL));
     // reduced = sum (y)
     GRB_TRY (GrB_reduce(&reduced, NULL,GrB_PLUS_MONOID_FP32,y,NULL));
-    // y = (-reduced/alpha)*y
-    GRB_TRY (GrB_apply(y,NULL,NULL,GrB_TIMES_FP32,-reduced/alpha,y,NULL));
+    // y = (-reduced/alpha)*u
+    GRB_TRY (GrB_apply(y,NULL,NULL,GrB_TIMES_FP32,-reduced/alpha,u,NULL));
     // y = x + y
     GRB_TRY (GrB_eWiseAdd(y,NULL,NULL,GrB_PLUS_FP32,x,y,NULL));
     
@@ -254,7 +254,7 @@ int LAGraph_Laplacian   // compute the Laplacian matrix
 
     // t = Lap * x via the LAGraph_plus_one_fp32 semiring
     GRB_TRY (GrB_Vector_new (&t, GrB_FP32, ncol));
-    GRB_TRY (GrB_Vector_new (&x, GrB_INT64, ncol)) ;
+    GRB_TRY (GrB_Vector_new (&x, GrB_FP32, ncol)) ;
     GRB_TRY (GrB_assign (x, NULL, NULL, 0, GrB_ALL, ncol, NULL)) ; 
     GRB_TRY(GrB_mxv(t,NULL,NULL,LAGraph_plus_one_fp32,Lap,x,NULL));
 
