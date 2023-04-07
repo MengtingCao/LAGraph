@@ -674,23 +674,28 @@ int LAGraph_Hdip_Fiedler   // compute the Hdip_Fiedler
         GRB_TRY (GrB_apply (x, NULL, NULL, GrB_DIV_FP32, x,beta, NULL));
                 
         //Set y = hmhx with m being L
+	//TODO: Why commented out?
         //GRB_TRY (GrB_Vector_new (&y, GrB_FP32, n));
-        LG_TRY (LAGraph_hmhx(y,L,u,x,alpha,msg)); 
+        LG_TRY (LAGraph_hmhx(y,L,u,x,alpha,msg));
+       	//y(0)=0	
         GRB_TRY (GrB_Vector_setElement_FP32(y, 0, 0));
+
         //lamb = x.emult(y).reduce_float(mon=gb.types.FP32.PLUS_MONOID)
-  
+	//lamb = x'*y
         GRB_TRY (GrB_eWiseMult (lambhelper, NULL, NULL, GrB_TIMES_FP32, x, y, NULL));
         GRB_TRY (GrB_reduce(&lambda,NULL,GrB_PLUS_MONOID_FP32,lambhelper,NULL));
+	//TODO: Why commented out?
         // GRB_TRY (GrB_Vector_clear(lambhelper));
 
         //getting the inf norm for the vector normer using norm(v,inf) = max(sum(abs(v))) vector v
+	//TODO: e = norm(y-lambda*x,inf)
+	//lambhelper = -lambda*x
         GRB_TRY (GrB_apply (lambhelper, NULL, NULL, GrB_TIMES_FP32,-lambda,x, NULL)) ;
+	//lambhelper = y - lambda*x
         GRB_TRY (GrB_eWiseAdd (lambhelper, NULL, NULL, GrB_MINUS_FP32, y,lambhelper,NULL));
         //getting abs(lambhelper)
         GRB_TRY (GrB_apply (lambhelper, NULL, NULL, GrB_ABS_FP32,lambhelper, NULL));
-	//TODO: Giving warning
-        GRB_TRY (GrB_reduce (&lambda, NULL, NULL, GrB_MAX_MONOID_FP32,lambhelper, NULL));
-        e = lambda;
+        GRB_TRY (GrB_reduce (&e, NULL, GrB_MAX_MONOID_FP32,lambhelper, NULL));
         
         //if e/inf norm of L<emax, break
         k_outer = i;
@@ -702,8 +707,8 @@ int LAGraph_Hdip_Fiedler   // compute the Hdip_Fiedler
         }
         last_err=e;
         //x=mypcg2(L,u,alpha,indiag,x,tol,kmax[1])
-	//TODO: mypcg2() missing u input param
-        LG_TRY (LAGraph_mypcg2(x,kk,L,alpha,indiag,x,tol,kmaxOne,msg));
+	//TODO: mypcg2() was missing u
+        LG_TRY (LAGraph_mypcg2(&x,&kk,L,u,alpha,indiag,x,tol,kmaxOne,msg));
 	k_inner=k_inner+kk ;
         GRB_TRY (GrB_Vector_setElement_FP32(x, 0, 0));
  
