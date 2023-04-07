@@ -255,7 +255,9 @@ int LAGraph_Laplacian   // compute the Laplacian matrix
     // t = Lap * x via the LAGraph_plus_one_fp32 semiring
     GRB_TRY (GrB_Vector_new (&t, GrB_FP32, ncol));
     GRB_TRY (GrB_Vector_new (&x, GrB_FP32, ncol)) ;
+    // create a dense vector filled with 0s
     GRB_TRY (GrB_assign (x, NULL, NULL, 0, GrB_ALL, ncol, NULL)) ; 
+    // x += Lap*x
     GRB_TRY(GrB_mxv(t,NULL,NULL,LAGraph_plus_one_fp32,Lap,x,NULL));
 
     //creates a sparse Matrix with same dimensions as Lap, and assigns -1 with Lap as a Mask
