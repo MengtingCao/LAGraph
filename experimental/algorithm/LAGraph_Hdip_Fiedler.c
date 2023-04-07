@@ -665,7 +665,7 @@ int LAGraph_Hdip_Fiedler   // compute the Hdip_Fiedler
     //for i from 1 to kmax[0]+1
     GRB_TRY(GrB_Vector_extractElement(&kmaxZero,kmax,0));
     //setting up kmax[1]
-    GRB_TRY(GrB_Vector_extractElement(kmaxOne,kmax,1));
+    GRB_TRY(GrB_Vector_extractElement(&kmaxOne,kmax,1));
     for (i=1;i<=kmaxZero;i++)
     {
         //compute beta = 2-norm of x and set x = x/beta
@@ -688,8 +688,9 @@ int LAGraph_Hdip_Fiedler   // compute the Hdip_Fiedler
         GRB_TRY (GrB_eWiseAdd (lambhelper, NULL, NULL, GrB_MINUS_FP32, y,lambhelper,NULL));
         //getting abs(lambhelper)
         GRB_TRY (GrB_apply (lambhelper, NULL, NULL, GrB_ABS_FP32,lambhelper, NULL));
-        GRB_TRY (GrB_apply (lambhelper, NULL, NULL, GrB_MAX_FP32,lambhelper, NULL));
-        GRB_TRY(GrB_Vector_extractElement(e,lambhelper,0));
+	//TODO: Giving warning
+        GRB_TRY (GrB_reduce (&lambda, NULL, NULL, GrB_MAX_MONOID_FP32,lambhelper, NULL));
+        e = lambda;
         
         //if e/inf norm of L<emax, break
         k_outer = i;
@@ -699,10 +700,11 @@ int LAGraph_Hdip_Fiedler   // compute the Hdip_Fiedler
         {
             break;
         }
-        lasterr=e;
+        last_err=e;
         //x=mypcg2(L,u,alpha,indiag,x,tol,kmax[1])
-        LG_TRY (LAGRAPH_mypcg2(x,kk,L,alpha,indiag,x,tol,kmaxOne,msg));
-        k_inner=k_inner+kk ;
+	//TODO: mypcg2() missing u input param
+        LG_TRY (LAGraph_mypcg2(x,kk,L,alpha,indiag,x,tol,kmaxOne,msg));
+	k_inner=k_inner+kk ;
         GRB_TRY (GrB_Vector_setElement_FP32(x, 0, 0));
  
     }
