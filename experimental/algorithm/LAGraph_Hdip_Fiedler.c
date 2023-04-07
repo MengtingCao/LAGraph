@@ -244,6 +244,7 @@ int LAGraph_Laplacian   // compute the Laplacian matrix
     GrB_Matrix Lap = NULL;    
     // Assert G->A is symmetric
     // Lap = (float) offdiag (G->A)
+    (*Lap_handle)= NULL ;
     GRB_TRY (GrB_Matrix_ncols(&ncol, G));
     GRB_TRY (GrB_Matrix_new (&Lap, GrB_FP32, ncol, ncol));
     GRB_TRY (GrB_select (Lap,NULL,NULL,GrB_OFFDIAG,G,0,NULL));
@@ -653,7 +654,7 @@ int LAGraph_Hdip_Fiedler   // compute the Hdip_Fiedler
 
     //indiag = diagonal matrix with indiag = 1/L[0], as a preconditioner
     GRB_TRY (GrB_Matrix_new(&indiag, GrB_FP32, n, n));
-    GRB_TRY (GrB_select (indiag,NULL,NULL,GrB_DIAG,NULL,NULL,NULL,NULL));
+    GRB_TRY (GrB_select (indiag,NULL,NULL,GrB_DIAG, L, 0, NULL));
     GRB_TRY (GrB_apply (indiag, NULL, NULL, GrB_DIV_FP32, 1, indiag, NULL));
     last_err = FLT_MAX;   
     
@@ -662,7 +663,7 @@ int LAGraph_Hdip_Fiedler   // compute the Hdip_Fiedler
     //used to set y = hmhx with m being L
     GRB_TRY (GrB_Vector_new (&y, GrB_FP32, n));
     //for i from 1 to kmax[0]+1
-    GRB_TRY(GrB_Vector_extractElement(kmaxZero,kmax,0));
+    GRB_TRY(GrB_Vector_extractElement(&kmaxZero,kmax,0));
     //setting up kmax[1]
     GRB_TRY(GrB_Vector_extractElement(kmaxOne,kmax,1));
     for (i=1;i<=kmaxZero;i++)
@@ -670,7 +671,7 @@ int LAGraph_Hdip_Fiedler   // compute the Hdip_Fiedler
         //compute beta = 2-norm of x and set x = x/beta
         GRB_TRY (GrB_Vector_setElement_FP32(x, 0, 0));
         LG_TRY (LAGraph_norm2(&beta,x,msg));// z  = happly with z,u and alpha
-        GRB_TRY (GrB_apply (x, NULL, NULL, GrB_RDIV_FP32, beta,x, NULL));
+        GRB_TRY (GrB_apply (x, NULL, NULL, GrB_DIV_FP32, x,beta, NULL));
                 
         //Set y = hmhx with m being L
         //GRB_TRY (GrB_Vector_new (&y, GrB_FP32, n));
@@ -684,7 +685,7 @@ int LAGraph_Hdip_Fiedler   // compute the Hdip_Fiedler
 
         //getting the inf norm for the vector normer using norm(v,inf) = max(sum(abs(v))) vector v
         GRB_TRY (GrB_apply (lambhelper, NULL, NULL, GrB_TIMES_FP32,-lambda,x, NULL)) ;
-        GRB_TRY (GrB_eWiseAdd (lambhelper, NULL, NULL, GrB_MINUS_FP32, y,lambhelper,NULL);
+        GRB_TRY (GrB_eWiseAdd (lambhelper, NULL, NULL, GrB_MINUS_FP32, y,lambhelper,NULL));
         //getting abs(lambhelper)
         GRB_TRY (GrB_apply (lambhelper, NULL, NULL, GrB_ABS_FP32,lambhelper, NULL));
         GRB_TRY (GrB_apply (lambhelper, NULL, NULL, GrB_MAX_FP32,lambhelper, NULL));
@@ -716,7 +717,7 @@ int LAGraph_Hdip_Fiedler   // compute the Hdip_Fiedler
  // GRB_TRY (GrB_Vector_clear(lambhelper));
     // set x=x-beta*u
     GRB_TRY (GrB_apply (lambhelper, NULL, NULL, GrB_TIMES_FP32,-beta,u, NULL));
-    GRB_TRY (GrB_eWiseAdd (x, NULL, NULL, GrB_PLUS_FP32, x,lambhelper,NULL);
+    GRB_TRY (GrB_eWiseAdd (x, NULL, NULL, GrB_PLUS_FP32, x,lambhelper,NULL));
 
     //vectors start at 0
     //iters is used to return no. of inner and outer iterations
