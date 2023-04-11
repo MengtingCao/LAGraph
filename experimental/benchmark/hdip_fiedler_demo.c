@@ -151,10 +151,13 @@ int main(int argc, char **argv)
 
     // printf("works?2");
     // t = LAGraph_WallClockTime( );
-    printf("works?");
+    // printf("works?");
+    printf("\n==========================The vector x:\n");
     GxB_print(x, 3);
+    printf("\n==========================The vector u:\n");
     GxB_print(u, 3);
     int result = LAGraph_mypcg2(&steper, &k, Y, u, alpha, indiag, x, .000001, 50, msg);
+    printf("\n==========================The steper:\n");
     GxB_print(steper, 3);
     printf("result: %d %s\n", result, msg);
     LG_TRY(result);
@@ -169,7 +172,8 @@ int main(int argc, char **argv)
 
     bool isequal = false;
     t = LAGraph_WallClockTime();
-    // LG_TRY (LAGraph_Matrix_IsEqual (&isequal, Y, G->A, msg)) ;
+    //TODO: G->A is incorrect graph to check against
+    LG_TRY (LAGraph_Matrix_IsEqual (&isequal, Y, G->A, msg)) ;
     t = LAGraph_WallClockTime() - t;
     printf("Time to check results:       %g sec\n", t);
     if (isequal)
@@ -187,6 +191,7 @@ int main(int argc, char **argv)
 
     printf("\n===============================The result matrix Y:\n");
     LG_TRY(LAGraph_Matrix_Print(Y, LAGraph_SHORT, stdout, msg));
+    printf("\n===============================The steper:\n");
     LG_TRY(LAGraph_Vector_Print(steper, LAGraph_SHORT, stdout, msg));
 
     //--------------------------------------------------------------------------
