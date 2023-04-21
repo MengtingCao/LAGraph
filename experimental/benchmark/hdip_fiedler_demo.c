@@ -128,7 +128,7 @@ int main(int argc, char **argv)
 
     // Variables needed to test Laplacian
     float infnorm;
-    LG_TRY(LAGraph_Laplacian(&Y, infnorm, A, msg));
+    LG_TRY(LAGraph_Laplacian(&Y, &infnorm, A, msg));
 
     LAGRAPH_TRY(LAGraph_Matrix_Print(Y, LAGraph_SHORT, stdout, msg));
 

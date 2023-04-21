@@ -1004,7 +1004,7 @@ int LAGraph_Laplacian // compute the Laplacian matrix
         // Question/TODO:Should i change matricies from pointers to normal variable names?
         //  outputs:
         GrB_Matrix *Lap, // the output Laplacian matrix
-        float inform,    // infinity norm of Lap
+        float *inform,    // infinity norm of Lap
         // inputs:
         GrB_Matrix G, // input matrix, symmetric
                       //  GrB_Type type,      // the type of Lap, typically GrB_FP32, ...

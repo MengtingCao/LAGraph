@@ -165,16 +165,23 @@ int LAGraph_norm2 //norm2 checked for pointer mistakes
     GrB_Index len ;
     float norm2;
 
+    printf ("in norm2:\n") ;
+    GxB_print (v, 3) ;
+
     GRB_TRY (GrB_Vector_size (&len, v)) ;
     GRB_TRY (GrB_Vector_new (&t, GrB_FP32, len)) ;
-#if LG_SUITESPARSE
+// #if LAGRAPH_SUITESPARSE
     // t = v.^2
     GRB_TRY (GrB_apply (t, NULL, NULL, GxB_POW_FP32, v, (float) 2, NULL)) ;
-#else
-    // t = t.*t
-    GRB_TRY (GrB_eWiseMult (t, NULL, NULL, GrB_TIMES_FP32, t, t, NULL));
-#endif
+// #else
+//     // t = v.*v
+//     GRB_TRY (GrB_eWiseMult (t, NULL, NULL, GrB_TIMES_FP32, v, v, NULL));
+// #endif
+    GxB_print (t, 3) ;
+
     GRB_TRY (GrB_reduce (&norm2,NULL, GrB_PLUS_MONOID_FP32, t, NULL));
+    printf ("sum of t: %g\n", norm2) ;
+
     norm2 = sqrtf (norm2) ;
     
     (*norm2_helper) = norm2 ;
@@ -229,7 +236,7 @@ int LAGraph_Laplacian   // compute the Laplacian matrix
     //Question/TODO:Should i change matricies from pointers to normal variable names?
     // outputs:
     GrB_Matrix *Lap_handle,    // the output Laplacian matrix 
-    float infnorm,      // infinity norm of Lap
+    float *infnorm,      // infinity norm of Lap FIXME: this should be *infnorm
     // inputs:
     GrB_Matrix G,    // input matrix, symmetric
 //  GrB_Type type,      // the type of Lap, typically GrB_FP32, ...
@@ -272,8 +279,9 @@ int LAGraph_Laplacian   // compute the Laplacian matrix
     GRB_TRY(GrB_assign(t,t,NULL,((double) 1),GrB_ALL,ncol,GrB_DESC_SC));
 
     //inf norm calc using vector d and MAX_MONOID 
-    GRB_TRY (GrB_reduce (&infnorm, NULL, GrB_MAX_MONOID_FP32, t, NULL));
-    infnorm=infnorm*2;
+    float result ;
+    GRB_TRY (GrB_reduce (&result, NULL, GrB_MAX_MONOID_FP32, t, NULL));
+    result = result * 2 ;
     
     //Using Matrix_diag to create a diagonal matrix from a vector    
     GRB_TRY (GrB_Matrix_diag(&DMatrix,t,0));
@@ -284,6 +292,7 @@ int LAGraph_Laplacian   // compute the Laplacian matrix
     // free workspace and return result
     LG_FREE_WORK;
     (*Lap_handle)= Lap;
+    (*infnorm)= result ;
     return (GrB_SUCCESS);
 }
 
@@ -468,7 +477,8 @@ int LAGraph_mypcg2
         //Apply the preconditioner, using hmhx
         LG_TRY (LAGraph_hmhx(z,invdiag,u,r,malpha,msg)); 
         GRB_TRY (GrB_Vector_setElement_FP32(z, 0, 0));
-        //GxB_print (z, 3) ;
+        printf ("================= k %d\n", k) ;
+        GxB_print (z, 3) ;
      
         //save the prior rho
         rho_prior=rho;
@@ -645,13 +655,21 @@ int LAGraph_Hdip_Fiedler   // compute the Hdip_Fiedler
     //Set u(0) = 1+sqrt(n). u(1:n) = 1 and alpha = n+sqrt(n)
     GRB_TRY (GrB_Matrix_nrows(&n, L));
     GRB_TRY (GrB_Vector_new (&u, GrB_FP32, n));
-    GRB_TRY (GrB_apply (u, NULL, NULL, GxB_ONE_FP32, u, NULL));
+//  GRB_TRY (GrB_apply (u, NULL, NULL, GxB_ONE_FP32, u, NULL));
+    // u(0:n-1) = 1
+    GRB_TRY (GrB_assign (u, NULL, NULL, 1, GrB_ALL, n, NULL)) ;
+
     GRB_TRY (GrB_Vector_setElement_FP32(u, 1+sqrtf(n), 0));
+    GrB_wait (u, GrB_MATERIALIZE) ;
+    printf ("initially ==== u = \n") ;
+    GxB_print (u,3) ;
     alpha = n+sqrtf(n);
 
     //Set x(0) = 0 and x(1:n) = 1
     GRB_TRY (GrB_Vector_new (&x, GrB_FP32, n));
-    GRB_TRY (GrB_apply (x, NULL, NULL, GxB_ONE_FP32, x, NULL));
+//  GRB_TRY (GrB_apply (x, NULL, NULL, GxB_ONE_FP32, x, NULL));
+    // x(0:n-1) = 1
+    GRB_TRY (GrB_assign (x, NULL, NULL, 1, GrB_ALL, n, NULL)) ;
     GRB_TRY (GrB_Vector_setElement_FP32(x, 0, 0));
 
     //indiag = diagonal matrix with indiag = 1/L[0], as a preconditioner
@@ -670,10 +688,15 @@ int LAGraph_Hdip_Fiedler   // compute the Hdip_Fiedler
     GRB_TRY(GrB_Vector_extractElement(&kmaxOne,kmax,1));
     for (i=1;i<=kmaxZero;i++)
     {
+        printf ("================== kth iteration: %d\n", (int) i) ;
+        printf ("initially x:\n") ;
+        GxB_print (x, GxB_COMPLETE) ;
         //compute beta = 2-norm of x and set x = x/beta
         GRB_TRY (GrB_Vector_setElement_FP32(x, 0, 0));
         LG_TRY (LAGraph_norm2(&beta,x,msg));// z  = happly with z,u and alpha
+        printf ("beta: %g\n", beta) ;
         GRB_TRY (GrB_apply (x, NULL, NULL, GrB_DIV_FP32, x,beta, NULL));
+        GxB_print (x, GxB_COMPLETE) ;
                 
         //Set y = hmhx with m being L
 	//TODO: Why commented out?
@@ -681,6 +704,8 @@ int LAGraph_Hdip_Fiedler   // compute the Hdip_Fiedler
         LG_TRY (LAGraph_hmhx(y,L,u,x,alpha,msg));
        	//y(0)=0	
         GRB_TRY (GrB_Vector_setElement_FP32(y, 0, 0));
+        printf ("output of hmhx:\n") ;
+        GxB_print (y, 3) ;
 
         //lamb = x.emult(y).reduce_float(mon=gb.types.FP32.PLUS_MONOID)
 	//lamb = x'*y
@@ -688,26 +713,30 @@ int LAGraph_Hdip_Fiedler   // compute the Hdip_Fiedler
         GRB_TRY (GrB_reduce(&lambda,NULL,GrB_PLUS_MONOID_FP32,lambhelper,NULL));
 	//TODO: Why commented out?
         // GRB_TRY (GrB_Vector_clear(lambhelper));
+        printf ("lambda %g\n", lambda) ;
 
         //getting the inf norm for the vector normer using norm(v,inf) = max(sum(abs(v))) vector v
 	//TODO: e = norm(y-lambda*x,inf)
 	//lambhelper = -lambda*x
         GRB_TRY (GrB_apply (lambhelper, NULL, NULL, GrB_TIMES_FP32,-lambda,x, NULL)) ;
 	//lambhelper = y - lambda*x
-        GRB_TRY (GrB_eWiseAdd (lambhelper, NULL, NULL, GrB_MINUS_FP32, y,lambhelper,NULL));
+        GRB_TRY (GrB_eWiseAdd (lambhelper, NULL, NULL, GrB_PLUS_FP32, y,lambhelper,NULL));
         //getting abs(lambhelper)
         GRB_TRY (GrB_apply (lambhelper, NULL, NULL, GrB_ABS_FP32,lambhelper, NULL));
         GRB_TRY (GrB_reduce (&e, NULL, GrB_MAX_MONOID_FP32,lambhelper, NULL));
+        printf ("e %g\n", e) ;
         
         //if e/inf norm of L<emax, break
         k_outer = i;
         e = e/InfNorm;
+        printf ("Lnorm %g\n", InfNorm) ;
         
         if(e<emax && last_err<2*e)
         {
             break;
         }
         last_err=e;
+        printf ("e %g\n", e) ;
         //x=mypcg2(L,u,alpha,indiag,x,tol,kmax[1])
 	//TODO: mypcg2() was missing u
         LG_TRY (LAGraph_mypcg2(&x,&kk,L,u,alpha,indiag,x,tol,kmaxOne,msg));
