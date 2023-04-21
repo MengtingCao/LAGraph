@@ -68,6 +68,11 @@ int main(int argc, char **argv)
     GrB_Vector steper = NULL;
     GrB_Vector u = NULL; // a vector of size nrowsLap, filled with 1.
     // set u[0] = 1+sqrt(nrowsLap)
+    // Additional variables needed to test Hdip
+    GrB_Vector iters_handle = NULL;
+    float lambda_result = 0;
+    GrB_Vector x_handle = NULL;
+    GrB_Vector kmax = NULL;
 
     // start GraphBLAS and LAGraph
     bool burble = false; // set true for diagnostic outputs
@@ -110,16 +115,26 @@ int main(int argc, char **argv)
     GrB_Index n, nvals;
     GRB_TRY(GrB_Matrix_nrows(&n, G->A));
     GRB_TRY(GrB_Matrix_nvals(&nvals, G->A));
-    LAGRAPH_TRY(LAGraph_Graph_Print(G, LAGraph_SHORT, stdout, msg));
+    // LAGRAPH_TRY(LAGraph_Graph_Print(G, LAGraph_SHORT, stdout, msg));
     GRB_TRY(GrB_Matrix_new(&A, GrB_FP32, n, n));
     GRB_TRY(GrB_assign(A, G->A, NULL, (double)1,
                        GrB_ALL, n, GrB_ALL, n, GrB_DESC_S));
     GrB_free(&(G->A));
     G->A = A;
 
+    //--------------------------------------------------------------------------
+    // try the LAGraph_Laplacian "algorithm"
+    //--------------------------------------------------------------------------
+
     // Variables needed to test Laplacian
-    float inform;
-    LG_TRY(LAGraph_Laplacian(&Y, inform, A, msg));
+    float infnorm;
+    LG_TRY(LAGraph_Laplacian(&Y, infnorm, A, msg));
+
+    LAGRAPH_TRY(LAGraph_Matrix_Print(Y, LAGraph_SHORT, stdout, msg));
+
+    //--------------------------------------------------------------------------
+    // try the LAGraph_mypcg2 "algorithm"
+    //--------------------------------------------------------------------------
 
     GrB_Index k;
     GrB_Index nrows;
@@ -142,7 +157,7 @@ int main(int argc, char **argv)
     GRB_TRY(GrB_select(indiag, NULL, NULL, GrB_DIAG, Y, 0, NULL));
     // printf("works?4");
     GRB_TRY(GrB_apply(indiag, NULL, NULL, GrB_MINV_FP32, indiag, NULL));
-
+    
     // printf("works?3");
     GRB_TRY(GrB_Vector_new(&x, GrB_FP32, n));
     // GRB_TRY (GrB_apply (x, NULL, NULL, GxB_ONE_FP32, x, NULL));
@@ -152,19 +167,43 @@ int main(int argc, char **argv)
     // printf("works?2");
     // t = LAGraph_WallClockTime( );
     // printf("works?");
-    printf("\n==========================The vector x:\n");
-    GxB_print(x, 3);
-    printf("\n==========================The vector u:\n");
-    GxB_print(u, 3);
+    //printf("\n==========================The vector L:\n");
+    //LG_TRY(LAGraph_Matrix_Print(Y, LAGraph_SHORT, stdout, msg));
+    //printf("\n==========================The vector u:\n");
+    //GxB_print(u, 3);
+    //printf("\n==========================The vector alpha:\n");
+    //GxB_print(alpha,1);
+    //printf("\n==========================The vector indiag:\n");
+    //LAGRAPH_TRY(LAGraph_Matrix_Print(indiag, LAGraph_SHORT, stdout, msg));
+    //printf("\n==========================The vector x:\n");
+    //GxB_print(x, 3);
+    //printf("\n==========================The vector u:\n");
+    //GxB_print(u, 3);
     int result = LAGraph_mypcg2(&steper, &k, Y, u, alpha, indiag, x, .000001, 50, msg);
-    printf("\n==========================The steper:\n");
-    GxB_print(steper, 3);
-    printf("result: %d %s\n", result, msg);
+    //printf("\n==========================The steper:\n");
+    //GxB_print(steper, 3);
+    //printf("result: %d %s\n", result, msg);
     LG_TRY(result);
-    printf("k = %lu\n", k);
-    printf("aftermypcg2");
+    //printf("k = %lu\n", k);
+    //printf("aftermypcg2");
     // t = LAGraph_WallClockTime( ) - t;
-    printf("Time for LAGraph_HelloWorld: %g sec\n", t);
+    //printf("Time for LAGraph_HelloWorld: %g sec\n", t);
+
+    //--------------------------------------------------------------------------
+    // try the LAGraph_Hdip_Fiedler "algorithm"
+    //--------------------------------------------------------------------------
+    //Set kmax = [20,50]
+    GRB_TRY(GrB_Vector_new(&kmax, GrB_FP32, 2));
+    GRB_TRY(GrB_Vector_setElement_FP32(kmax, 20, 0));
+    GRB_TRY(GrB_Vector_setElement_FP32(kmax, 50, 1));
+    printf("\n==========================The kmax:\n");
+    GxB_print(kmax, 3);
+    LAGraph_Hdip_Fiedler(&iters_handle, &lambda_result, &x_handle, Y, infnorm, kmax, 0.000001, 0.000001, msg);
+    printf("\n==========================The iters_handle:\n");
+    GxB_print(iters_handle, 3);
+    printf("lambda_result = %f\n", lambda_result);
+    printf("\n==========================The x_handle:\n");
+    GxB_print(x_handle, 3);
 
     //--------------------------------------------------------------------------
     // check the results (make sure Y is a copy of G->A)

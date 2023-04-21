@@ -429,8 +429,8 @@ int LAGraph_mypcg2
     //Set r to be equal to vector b
 //  GRB_TRY (GrB_Vector_new(&r, GrB_FP32, bsize));
     GRB_TRY (GrB_Vector_dup(&r, b));
-    printf ("first r:\n") ;
-    GxB_print (r, 3) ;
+    //printf ("first r:\n") ;
+    //GxB_print (r, 3) ;
 
     //Set steper to size n, and filled with 0s.
     GRB_TRY (GrB_Vector_new (&steper, GrB_FP32, n));
@@ -459,16 +459,16 @@ int LAGraph_mypcg2
 
     for (k=1;k<=maxit; k++)
     {
-        printf ("\n======================== k %ld\n", k) ;
-        GxB_print (invdiag, 3) ;
-        GxB_print (u, 3) ;
-        GxB_print (r, 3) ;
-        printf ("malpha %g\n", malpha) ;
+        //printf ("\n======================== k %ld\n", k) ;
+        //GxB_print (invdiag, 3) ;
+        //GxB_print (u, 3) ;
+        //GxB_print (r, 3) ;
+        //printf ("malpha = %g\n", malpha) ;
 
         //Apply the preconditioner, using hmhx
         LG_TRY (LAGraph_hmhx(z,invdiag,u,r,malpha,msg)); 
         GRB_TRY (GrB_Vector_setElement_FP32(z, 0, 0));
-        GxB_print (z, 3) ;
+        //GxB_print (z, 3) ;
      
         //save the prior rho
         rho_prior=rho;
@@ -489,6 +489,8 @@ int LAGraph_mypcg2
             //p=p+z
             GRB_TRY (GrB_eWiseAdd(p, NULL, NULL, GrB_PLUS_FP32, p, z, NULL)) ;
         }
+
+	// apply the matrix q = A*p
         //hmhx is used on q
         LG_TRY (LAGraph_hmhx(q,L,u,p,malpha,msg)); 
         GRB_TRY (GrB_Vector_setElement_FP32(q, 0, 0));
@@ -511,7 +513,7 @@ int LAGraph_mypcg2
         GRB_TRY (GrB_Vector_setElement_FP32(r, 0, 0));
 
         LG_TRY (LAGraph_norm2(&rnorm,r,msg));// z  = happly with z,u and alpha
-        printf ("rnorm %g, tol %g\n", rnorm, tol) ;
+        //printf ("rnorm %g, tol %g\n", rnorm, tol) ;
         if(rnorm < tol){
             break;
         }   
