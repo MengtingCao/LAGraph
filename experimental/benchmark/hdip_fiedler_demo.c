@@ -104,10 +104,10 @@ int main(int argc, char **argv)
         false,        // ensure all entries are positive, if true
         argc, argv)); // input to this main program
     t = LAGraph_WallClockTime() - t;
-    printf("Time to read the graph:      %g sec\n", t);
+    //printf("Time to read the graph:      %g sec\n", t);
 
-    printf("\n==========================The input graph matrix G:\n");
-    LG_TRY(LAGraph_Graph_Print(G, LAGraph_SHORT, stdout, msg));
+    //printf("\n==========================The input graph matrix G:\n");
+    //LG_TRY(LAGraph_Graph_Print(G, LAGraph_SHORT, stdout, msg));
 
     //--------------------------------------------------------------------------
     // try the LAGraph_HelloWorld "algorithm"
@@ -130,7 +130,7 @@ int main(int argc, char **argv)
     float infnorm;
     LG_TRY(LAGraph_Laplacian(&Y, &infnorm, A, msg));
 
-    LAGRAPH_TRY(LAGraph_Matrix_Print(Y, LAGraph_SHORT, stdout, msg));
+    //LAGRAPH_TRY(LAGraph_Matrix_Print(Y, LAGraph_SHORT, stdout, msg));
 
     //--------------------------------------------------------------------------
     // try the LAGraph_mypcg2 "algorithm"
@@ -179,11 +179,11 @@ int main(int argc, char **argv)
     //GxB_print(x, 3);
     //printf("\n==========================The vector u:\n");
     //GxB_print(u, 3);
-    int result = LAGraph_mypcg2(&steper, &k, Y, u, alpha, indiag, x, .000001, 50, msg);
+    //int result = LAGraph_mypcg2(&steper, &k, Y, u, alpha, indiag, x, .000001, 50, msg);
     //printf("\n==========================The steper:\n");
     //GxB_print(steper, 3);
     //printf("result: %d %s\n", result, msg);
-    LG_TRY(result);
+    //LG_TRY(result);
     //printf("k = %lu\n", k);
     //printf("aftermypcg2");
     // t = LAGraph_WallClockTime( ) - t;
@@ -196,14 +196,13 @@ int main(int argc, char **argv)
     GRB_TRY(GrB_Vector_new(&kmax, GrB_FP32, 2));
     GRB_TRY(GrB_Vector_setElement_FP32(kmax, 20, 0));
     GRB_TRY(GrB_Vector_setElement_FP32(kmax, 50, 1));
-    printf("\n==========================The kmax:\n");
-    GxB_print(kmax, 3);
+
     LAGraph_Hdip_Fiedler(&iters_handle, &lambda_result, &x_handle, Y, infnorm, kmax, 0.000001, 0.000001, msg);
-    printf("\n==========================The iters_handle:\n");
-    GxB_print(iters_handle, 3);
-    printf("lambda_result = %f\n", lambda_result);
-    printf("\n==========================The x_handle:\n");
-    GxB_print(x_handle, 3);
+    //printf("\n==========================The iters_handle:\n");
+    //GxB_print(iters_handle, 3);
+    //printf("lambda_result = %f\n", lambda_result);
+    //printf("\n==========================The x_handle:\n");
+    //GxB_print(x_handle, 3);
 
     //--------------------------------------------------------------------------
     // check the results (make sure Y is a copy of G->A)
@@ -228,10 +227,10 @@ int main(int argc, char **argv)
     // print the results (Y is just a copy of G->A)
     //--------------------------------------------------------------------------
 
-    printf("\n===============================The result matrix Y:\n");
-    LG_TRY(LAGraph_Matrix_Print(Y, LAGraph_SHORT, stdout, msg));
-    printf("\n===============================The steper:\n");
-    LG_TRY(LAGraph_Vector_Print(steper, LAGraph_SHORT, stdout, msg));
+    //printf("\n===============================The result matrix Y:\n");
+    //LG_TRY(LAGraph_Matrix_Print(Y, LAGraph_SHORT, stdout, msg));
+    //printf("\n===============================The steper:\n");
+    //LG_TRY(LAGraph_Vector_Print(steper, LAGraph_SHORT, stdout, msg));
 
     //--------------------------------------------------------------------------
     // free everyting and finish
