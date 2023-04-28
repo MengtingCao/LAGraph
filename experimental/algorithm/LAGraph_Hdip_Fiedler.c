@@ -535,11 +535,13 @@ int LAGraph_mypcg2
 	GRB_TRY (GrB_Vector_dup(&x_temp, steper));
         GRB_TRY (GrB_apply (steper, NULL, NULL, GrB_TIMES_FP32, p, stepsize, NULL));
         GRB_TRY (GrB_eWiseAdd(steper, NULL, NULL, GrB_PLUS_FP32, x_temp, steper, NULL));
+        GrB_free (&x_temp) ;
 
         //r=r-stepsize*q 
 	GRB_TRY (GrB_Vector_dup(&r_temp, r));
 	GRB_TRY (GrB_apply (r, NULL, NULL, GrB_TIMES_FP32, -stepsize, q, NULL));
         GRB_TRY (GrB_eWiseAdd (r, NULL, NULL, GrB_PLUS_FP32, r_temp, r, NULL));
+        GrB_free (&r_temp) ;
 
         GRB_TRY (GrB_Vector_setElement_FP32(steper, 0, 0));
         GRB_TRY (GrB_Vector_setElement_FP32(r, 0, 0));
@@ -657,7 +659,7 @@ int LAGraph_Hdip_Fiedler   // compute the Hdip_Fiedler
     //TODO: Setup freeing memory.
 
     GrB_Index n;
-    GrB_Index k_inner;
+    GrB_Index k_inner = 0 ;
     GrB_Index k_outer;
     GrB_Index kk; //used to hold output from mypcg2
     GrB_Index i; // This is the integer used in for loop
@@ -766,11 +768,11 @@ int LAGraph_Hdip_Fiedler   // compute the Hdip_Fiedler
 	//printf ("output of mypcg2");
 	//printf ("----- x = ");
 	//GxB_print (x, 3);
-	printf ("kk = %f\n", kk);
-	printf ("k_inner = %f\n", k_inner);
+	printf ("kk = %lu\n", kk);
+	printf ("k_inner = %lu\n", k_inner);
 	
 	k_inner=k_inner+kk ;
-	printf ("k_inner = %f\n", k_inner);
+	printf ("k_inner = %lu\n", k_inner);
 
         GRB_TRY (GrB_Vector_setElement_FP32(x, 0, 0));
  
