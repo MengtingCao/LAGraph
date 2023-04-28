@@ -543,15 +543,10 @@ int LAGraph_mypcg2
 
         GRB_TRY (GrB_Vector_setElement_FP32(steper, 0, 0));
         GRB_TRY (GrB_Vector_setElement_FP32(r, 0, 0));
-	//printf("vector x: ");
-	//GxB_print(steper, 3);
-	//printf("vector r: ");
-	//GxB_print(r, 3);
 
         LG_TRY (LAGraph_norm2(&rnorm,r,msg));// z  = happly with z,u and alpha
-        //printf ("rnorm %g, tol %g\n", rnorm, tol) ;
+        
         if(rnorm < tol){
-	    n=k;
             break;
         }   
     }
@@ -771,11 +766,11 @@ int LAGraph_Hdip_Fiedler   // compute the Hdip_Fiedler
 	//printf ("output of mypcg2");
 	//printf ("----- x = ");
 	//GxB_print (x, 3);
-	printf ("kk = %g\n", kk);
-	printf ("k_inner = %g\n", k_inner);
+	printf ("kk = %f\n", kk);
+	printf ("k_inner = %f\n", k_inner);
 	
 	k_inner=k_inner+kk ;
-	printf ("k_inner = %g\n", k_inner);
+	printf ("k_inner = %f\n", k_inner);
 
         GRB_TRY (GrB_Vector_setElement_FP32(x, 0, 0));
  

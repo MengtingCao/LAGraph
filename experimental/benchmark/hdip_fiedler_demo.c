@@ -218,39 +218,22 @@ int main(int argc, char **argv)
 
     alpha = nrowsLap + sqrt(nrowsLap);
 
-    // printf("works?4");
     GRB_TRY(GrB_Matrix_new(&indiag, GrB_FP32, n, n));
     GRB_TRY(GrB_select(indiag, NULL, NULL, GrB_DIAG, Y, 0, NULL));
-    // printf("works?4");
     GRB_TRY(GrB_apply(indiag, NULL, NULL, GrB_MINV_FP32, indiag, NULL));
     
-    // printf("works?3");
     GRB_TRY(GrB_Vector_new(&x, GrB_FP32, n));
     // GRB_TRY (GrB_apply (x, NULL, NULL, GxB_ONE_FP32, x, NULL));
     GRB_TRY(GrB_assign(x, NULL, NULL, 1, GrB_ALL, n, NULL));
     GRB_TRY(GrB_Vector_setElement_FP32(x, 0, 0));
 
-    // printf("works?2");
-    // t = LAGraph_WallClockTime( );
-    // printf("works?");
-    //printf("\n==========================The vector L:\n");
-    //LG_TRY(LAGraph_Matrix_Print(Y, LAGraph_SHORT, stdout, msg));
-    //printf("\n==========================The vector u:\n");
-    //GxB_print(u, 3);
-    //printf("\n==========================The vector alpha:\n");
-    //GxB_print(alpha,1);
-    //printf("\n==========================The vector indiag:\n");
-    //LAGRAPH_TRY(LAGraph_Matrix_Print(indiag, LAGraph_SHORT, stdout, msg));
-    //printf("\n==========================The vector x:\n");
-    //GxB_print(x, 3);
-    //printf("\n==========================The vector u:\n");
-    //GxB_print(u, 3);
-    //int result = LAGraph_mypcg2(&steper, &k, Y, u, alpha, indiag, x, .000001, 50, msg);
+    t = LAGraph_WallClockTime( );
+    int result = LAGraph_mypcg2(&steper, &k, Y, u, alpha, indiag, x, .000001, 50, msg);
     //printf("\n==========================The steper:\n");
     //GxB_print(steper, 3);
     //printf("result: %d %s\n", result, msg);
     //LG_TRY(result);
-    //printf("k = %lu\n", k);
+    printf("k = %lu\n", k);
     //printf("aftermypcg2");
     // t = LAGraph_WallClockTime( ) - t;
     //printf("Time for LAGraph_HelloWorld: %g sec\n", t);
