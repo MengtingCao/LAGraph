@@ -360,6 +360,8 @@ int LAGraph_Laplacian   // compute the Laplacian matrix
     GrB_free (&p);                          \
     GrB_free (&q);                          \
     GrB_free (&gamma_helper);               \
+    GrB_free (&x_temp);                     \
+    GrB_free (&r_temp);                     \
 }                                           
 
 #define LG_FREE_ALL                         \
@@ -393,6 +395,8 @@ int LAGraph_mypcg2
     GrB_Vector z = NULL ; //used to apply preconditioner 
     GrB_Vector rho_helper = NULL ; // used to help calculate rho
     GrB_Vector p = NULL ; //search direction
+    GrB_Vector x_temp = NULL; //temporary x to hold x
+    GrB_Vector r_temp = NULL; //temporary r to hold r
     GrB_Vector q = NULL ; //used for hmhx after finding next step in direction p
     GrB_Vector gamma_helper = NULL ;
     GrB_Vector steper = NULL ;
@@ -457,14 +461,17 @@ int LAGraph_mypcg2
     //define vector q used to do hmhx after next step in direction p
     GRB_TRY (GrB_Vector_new (&q, GrB_FP32, bsize));
 
+    //define vector x_temp to store x temporarily
+    x_temp = NULL;
+    //define vector r_temp to store r temporarily
+    r_temp = NULL;
+
     //define vector gamma_helper
     GRB_TRY (GrB_Vector_new (&gamma_helper, GrB_FP32, bsize));
 
     //------------------------------------------------------------------------------
 
-    //for (k=1;k<=maxit; k++)
-    //test for loop:
-    for (k=1; k<=2; k++)
+    for (k=1;k<=maxit; k++)
     {
 	printf ("\n======================== pcg k = %ld\n", k);
 	//GxB_print (invdiag, 3);
@@ -484,8 +491,8 @@ int LAGraph_mypcg2
         //rho = r.emult(z).reduce_float(mon=gb.types.FP32.PLUS_MONOID) compute new rho
         GRB_TRY (GrB_eWiseAdd (rho_helper, NULL, NULL, GrB_TIMES_FP32, r, z, NULL));
 	GRB_TRY (GrB_reduce(&rho,NULL,GrB_PLUS_MONOID_FP32,rho_helper,NULL));
-        //GRB_TRY (GrB_Vector_clear(rho_helper));
-	printf ("result rho: %f\n", rho);
+        GRB_TRY (GrB_Vector_clear(rho_helper));
+	//printf ("result rho: %f\n", rho);
      
 
 
@@ -493,8 +500,8 @@ int LAGraph_mypcg2
             //first step is the direction p=z
             GRB_TRY (GrB_Vector_dup(&p, z));
 	    printf("vector p and z");
-	    GxB_print (p,3);
-	    GxB_print (z,3);
+	    //GxB_print (p,3);
+	    //GxB_print (z,3);
         }else{
             //subsequent step in direction p
             beta = rho/rho_prior;
@@ -502,9 +509,11 @@ int LAGraph_mypcg2
             GRB_TRY (GrB_apply (p, NULL, NULL, GrB_TIMES_FP32, p, beta, NULL)) ;
             //p=p+z
             GRB_TRY (GrB_eWiseAdd(p, NULL, NULL, GrB_PLUS_FP32, p, z, NULL)) ;
-	    printf("vector p and beta");
-	    printf("beta = %f\n", beta);
-	    GxB_print (p,3);
+	    //printf("vector p and beta\n");
+	    //printf("rho = %f\n", rho);
+	    //printf("rho_prior = %f\n", rho_prior);
+	    //printf("beta = %f\n", beta);
+	    //GxB_print (p,3);
         }
 
 	//TODO: p(1)=0?
@@ -514,33 +523,46 @@ int LAGraph_mypcg2
         LG_TRY (LAGraph_hmhx(q,L,u,p,malpha,msg)); 
         GRB_TRY (GrB_Vector_setElement_FP32(q, 0, 0));
 
+
         //gamma=p.emult(q).reduce_float(mon=gb.types.FP32.PLUS_MONOID)
         GRB_TRY (GrB_eWiseMult (gamma_helper, NULL, NULL, GrB_TIMES_FP32, p, q, NULL));
         GRB_TRY (GrB_reduce(&gamma,NULL,GrB_PLUS_MONOID_FP32,gamma_helper,NULL));
         //GRB_TRY (GrB_Vector_clear(gamma_helper));
-        
-        //stepsize to take
+	
         stepsize = rho/gamma;
         
         //takes a step towards the solution , steper = steper + stepsize*p
-        GRB_TRY (GrB_apply (p, NULL, NULL, GrB_TIMES_FP32, p, stepsize, NULL));
-        GRB_TRY (GrB_eWiseAdd(steper, NULL, NULL, GrB_PLUS_FP32, steper, p, NULL));
+	GRB_TRY (GrB_Vector_dup(&x_temp, steper));
+        GRB_TRY (GrB_apply (steper, NULL, NULL, GrB_TIMES_FP32, p, stepsize, NULL));
+        GRB_TRY (GrB_eWiseAdd(steper, NULL, NULL, GrB_PLUS_FP32, x_temp, steper, NULL));
 
         //r=r-stepsize*q 
-        GRB_TRY (GrB_eWiseAdd (r, NULL, NULL, GrB_MINUS_FP32, r, q, NULL));
+	GRB_TRY (GrB_Vector_dup(&r_temp, r));
+	GRB_TRY (GrB_apply (r, NULL, NULL, GrB_TIMES_FP32, -stepsize, q, NULL));
+        GRB_TRY (GrB_eWiseAdd (r, NULL, NULL, GrB_PLUS_FP32, r_temp, r, NULL));
+
         GRB_TRY (GrB_Vector_setElement_FP32(steper, 0, 0));
         GRB_TRY (GrB_Vector_setElement_FP32(r, 0, 0));
+	//printf("vector x: ");
+	//GxB_print(steper, 3);
+	//printf("vector r: ");
+	//GxB_print(r, 3);
 
         LG_TRY (LAGraph_norm2(&rnorm,r,msg));// z  = happly with z,u and alpha
         //printf ("rnorm %g, tol %g\n", rnorm, tol) ;
         if(rnorm < tol){
+	    printf("k: %ld\n",k);
+	    n=k;
+	    (*k_result) = k;
             break;
         }   
     }
-
+    printf("k: %ld\n",k);
+    printf("n: %ld\n",n);
+    (*k_result) = k;
     // free workspace and return result
     LG_FREE_WORK ;
-    (*k_result) = k ;
+    //(*k_result) = k ;
     (*steper_handle) = steper ;
     return (GrB_SUCCESS);
 }
@@ -753,11 +775,11 @@ int LAGraph_Hdip_Fiedler   // compute the Hdip_Fiedler
 	//printf ("output of mypcg2");
 	//printf ("----- x = ");
 	//GxB_print (x, 3);
-	//printf ("kk = %g\n", kk);
-	//printf ("k_inner = %g\n", k_inner);
+	printf ("kk = %g\n", kk);
+	printf ("k_inner = %g\n", k_inner);
 	
 	k_inner=k_inner+kk ;
-	//printf ("k_inner = %g\n", k_inner);
+	printf ("k_inner = %g\n", k_inner);
 
         GRB_TRY (GrB_Vector_setElement_FP32(x, 0, 0));
  
@@ -778,8 +800,8 @@ int LAGraph_Hdip_Fiedler   // compute the Hdip_Fiedler
     //vectors start at 0
     //iters is used to return no. of inner and outer iterations
     GRB_TRY (GrB_Vector_new (&iters, GrB_FP32, 2));
-    GRB_TRY (GrB_Vector_setElement_FP32(iters,k_inner,0));
-    GRB_TRY (GrB_Vector_setElement_FP32(iters,k_outer,1));
+    GRB_TRY (GrB_Vector_setElement_FP32(iters,k_outer,0));
+    GRB_TRY (GrB_Vector_setElement_FP32(iters,k_inner,1));
 
     // free workspace and return result
     LG_FREE_WORK ;

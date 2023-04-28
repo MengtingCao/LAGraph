@@ -198,11 +198,8 @@ int main(int argc, char **argv)
     GRB_TRY(GrB_Vector_setElement_FP32(kmax, 50, 1));
 
     LAGraph_Hdip_Fiedler(&iters_handle, &lambda_result, &x_handle, Y, infnorm, kmax, 0.000001, 0.000001, msg);
-    //printf("\n==========================The iters_handle:\n");
-    //GxB_print(iters_handle, 3);
-    //printf("lambda_result = %f\n", lambda_result);
-    //printf("\n==========================The x_handle:\n");
-    //GxB_print(x_handle, 3);
+    printf("\n==========================The iters_handle:\n");
+    GxB_print(iters_handle, 3);
 
     //--------------------------------------------------------------------------
     // check the results (make sure Y is a copy of G->A)
