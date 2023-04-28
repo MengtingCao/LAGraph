@@ -38,6 +38,72 @@
 #include "LAGraphX.h"
 #include "LG_internal.h"
 
+float difference (GrB_Vector centrality, double *matlab_result) ;
+
+float difference (GrB_Vector centrality, double *matlab_result)
+{
+    GrB_Vector diff = NULL, cmatlab = NULL ;
+    GrB_Index n = 0 ;
+    GrB_Vector_size (&n, centrality) ;
+    GrB_Vector_new (&cmatlab, GrB_FP32, n) ;
+    for (int i = 0 ; i < n ; i++)
+    {
+        GrB_Vector_setElement_FP64 (cmatlab, matlab_result [i], i) ;
+    }
+    // diff = max (abs (cmatlab - centrality))
+    GrB_Vector_new (&diff, GrB_FP32, n) ;
+    GrB_eWiseAdd (diff, NULL, NULL, GrB_MINUS_FP32, cmatlab, centrality,
+        NULL) ;
+    GrB_apply (diff, NULL, NULL, GrB_ABS_FP32, diff, NULL) ;
+    float err = 0 ;
+    GrB_reduce (&err, NULL, GrB_MAX_MONOID_FP32, diff, NULL) ;
+    GrB_free (&diff) ;
+    GrB_free (&cmatlab) ;
+    return (err) ;
+}
+
+double karate_laplacian [34] = {
+        -0.3561,
+        -0.1036,
+        -0.0156,
+        -0.1243,
+        -0.2280,
+        -0.2097,
+        -0.2097,
+        -0.1224,
+         0.0163,
+         0.1108,
+        -0.2280,
+        -0.2463,
+        -0.1853,
+        -0.0725,
+         0.1900,
+         0.1900,
+        -0.1548,
+        -0.1749,
+         0.1900,
+        -0.0741,
+         0.1900,
+        -0.1749,
+         0.1900,
+         0.1792,
+         0.1703,
+         0.1794,
+         0.2155,
+         0.1428,
+         0.1002,
+         0.1937,
+         0.0732,
+         0.0790,
+         0.1427,
+         0.1274} ;
+
+double karate_iters [2] = {
+        2,
+        14} ;
+
+float karate_lambda = 1.3297;
+
 // LG_FREE_ALL is required by LG_TRY
 #undef LG_FREE_ALL
 #define LG_FREE_ALL              \
@@ -205,13 +271,13 @@ int main(int argc, char **argv)
     // check the results (make sure Y is a copy of G->A)
     //--------------------------------------------------------------------------
 
-    bool isequal = false;
     t = LAGraph_WallClockTime();
-    //TODO: G->A is incorrect graph to check against
-    LG_TRY (LAGraph_Matrix_IsEqual (&isequal, Y, G->A, msg)) ;
+    float err = difference (x_handle, karate_laplacian) ;
+    printf("\n=============================Testing karate x vector:\n");
+    printf("err: %f\n", err);
     t = LAGraph_WallClockTime() - t;
     printf("Time to check results:       %g sec\n", t);
-    if (isequal)
+    if (err < 1e-4)
     {
         printf("Test passed.\n");
     }
@@ -220,14 +286,41 @@ int main(int argc, char **argv)
         printf("Test failure!\n");
     }
 
+    printf("\n=============================Testing karate lambda:\n");
+    if (lambda_result - karate_lambda < 1e-4)
+    {
+        printf("Test passed.\n");
+    }
+    else
+    {
+        printf("Test failure!\n");
+    }
+
+    t = LAGraph_WallClockTime();
+    err = difference (iters_handle, karate_iters) ;
+    printf("\n=============================Testing karate iterations:\n");
+    printf("err: %f\n", err);
+    t = LAGraph_WallClockTime() - t;
+    printf("Time to check results:       %g sec\n", t);
+    if (err < 1e-4)
+    {
+        printf("Test passed.\n");
+    }
+    else
+    {
+        printf("Test failure!\n");
+    }
+
+
     //--------------------------------------------------------------------------
     // print the results (Y is just a copy of G->A)
     //--------------------------------------------------------------------------
 
-    //printf("\n===============================The result matrix Y:\n");
-    //LG_TRY(LAGraph_Matrix_Print(Y, LAGraph_SHORT, stdout, msg));
-    //printf("\n===============================The steper:\n");
-    //LG_TRY(LAGraph_Vector_Print(steper, LAGraph_SHORT, stdout, msg));
+    printf("\n===============================The result vector x:\n");
+    GxB_print(x_handle, 3);
+    printf("\n===============================The lambda: %f\n", lambda_result);
+    printf("\n===============================The iters: \n");
+    GxB_print(iters_handle, 3);
 
     //--------------------------------------------------------------------------
     // free everyting and finish

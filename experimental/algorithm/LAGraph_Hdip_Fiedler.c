@@ -551,18 +551,14 @@ int LAGraph_mypcg2
         LG_TRY (LAGraph_norm2(&rnorm,r,msg));// z  = happly with z,u and alpha
         //printf ("rnorm %g, tol %g\n", rnorm, tol) ;
         if(rnorm < tol){
-	    printf("k: %ld\n",k);
 	    n=k;
-	    (*k_result) = k;
             break;
         }   
     }
-    printf("k: %ld\n",k);
-    printf("n: %ld\n",n);
-    (*k_result) = k;
+    
     // free workspace and return result
     LG_FREE_WORK ;
-    //(*k_result) = k ;
+    (*k_result) = k ;
     (*steper_handle) = steper ;
     return (GrB_SUCCESS);
 }
@@ -719,7 +715,7 @@ int LAGraph_Hdip_Fiedler   // compute the Hdip_Fiedler
     GRB_TRY(GrB_Vector_extractElement(&kmaxOne,kmax,1));
     for (i=1;i<=kmaxZero;i++)
     {
-        printf ("================== kth iteration: %d\n", (int) i) ;
+        //printf ("================== kth iteration: %d\n", (int) i) ;
         //printf ("initially x:\n") ;
         //GxB_print (x, GxB_COMPLETE) ;
         //compute beta = 2-norm of x and set x = x/beta
@@ -806,7 +802,7 @@ int LAGraph_Hdip_Fiedler   // compute the Hdip_Fiedler
     // free workspace and return result
     LG_FREE_WORK ;
     (*lambda_result) = lambda ;
-    (*x_handle) = x ;
+    (*x_handle) = x;
     (*iters_handle) = iters ;
     return (GrB_SUCCESS);
 }
